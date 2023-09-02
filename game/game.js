@@ -3,16 +3,16 @@ const sock = window.localStorage.getItem("socket");
 
 // console.log(pid, sock, window.localStorage.length);
 
-let needInfo = false;
-window.onblur = () => {
-    needInfo = true;
-}
-window.onfocus = () => {
-    if (needInfo) {
-        needInfo = false;
-        api.info(); // this is to refresh the timer because javascript sucks fucking dick
-    }
-}
+// let needInfo = false;
+// window.onblur = () => {
+//     needInfo = true;
+// }
+// window.onfocus = () => {
+//     if (needInfo) {
+//         needInfo = false;
+//         api.info(); // this is to refresh the timer because javascript sucks fucking dick
+//     }
+// }
 
 let self = "";
 let board = [[]];
@@ -27,6 +27,8 @@ const playerToColorClass = {
     "TWO": "yellow-piece",
 }
 
+let gameStarted = false;
+
 const api = new WsApi(sock, pid, (msg) => {
     const resp = JSON.parse(msg.data);
     console.log("received", resp.header, resp)
@@ -36,6 +38,13 @@ const api = new WsApi(sock, pid, (msg) => {
             break;
         case ("INFORMATION"):
             self = resp.role;
+            updateInfo(resp.boardData);
+            if (self != activePlayer) { setState(OPP_TURN); }
+            if (!timeSet && gameStarted) { // just one time after the game starts, start your timer
+                if (self == "ONE") {
+                    startMyTimer();
+                }
+            }
             if (!timeSet && self == "ONE") {
                 document.getElementById("myTime").classList.add("red-time");
                 document.getElementById("myTime").id = "p1time";
@@ -49,8 +58,6 @@ const api = new WsApi(sock, pid, (msg) => {
                 document.getElementById("theirTime").id = "p1time";
                 timeSet = true;
             }
-            updateInfo(resp.boardData);
-            if (self != activePlayer) { setState(OPP_TURN); }
             drawBoard(board);
             break;
         case ("MOVE_RESULT"):
@@ -115,6 +122,10 @@ const api = new WsApi(sock, pid, (msg) => {
             document.getElementById("state").classList.remove("invisible");
             document.getElementById("boardBar").classList.remove("uninteractable");
             document.getElementById("turnBar").classList.add("game-started");
+            if (self == "ONE") {
+                startMyTimer();
+            }
+            gameStarted = true;
             break;
         case ("OPPONENT_DISCONNECT"):
             addChat("Opponent Disconnected");
@@ -139,7 +150,9 @@ const stateAsString = [
     "Draw!",
 ];
 
-
+const gameIsOver = () => {
+    return state >= 3 && state <= 5;
+}
 
 let timer;
 
@@ -157,9 +170,8 @@ const tickTime = (time) => {
         const oldTime = theTime;
         theTime = new Date().getTime();
         const elapsed = theTime - oldTime;
-        time.minutes -= Math.floor(elapsed / 60000);
-        time.seconds = (time.seconds - Math.floor((elapsed % 60000) / 1000)) % 60;
-        time.decis = (time.decis - Math.floor((elapsed % 1000) / 100)) % 10;
+        time.raw -= elapsed;
+        computeTime(time, time.raw);
         writeTimes();
     }, 100)
 }
@@ -172,7 +184,7 @@ const setState = (st) => {
         startMyTimer();
     }
 
-    if (state >= 3 && state <= 5) { // game is over
+    if (gameIsOver()) {
         clearInterval(timer);   
     }
 
@@ -201,12 +213,14 @@ const computeTime = (time, t) => {
 }
 
 const p1time = {
+    raw: 0,
     minutes: 0,
     seconds: 0,
     decis: 0,
 }
 
 const p2time = {
+    raw: 0,
     minutes: 0,
     seconds: 0,
     decis: 0,
@@ -226,10 +240,12 @@ const startOppTimer = () => {
 }
 
 const setP1Time = (t) => {
+    p1time.raw = t;
     computeTime(p1time, t);
 }
 
 const setP2Time = (t) => {
+    p2time.raw = t;
     computeTime(p2time, t);
 }
 
@@ -364,6 +380,16 @@ document.getElementById("chatInput").onkeydown = (ev) => {
     if (ev.key == "Enter") {
         sendChat()
         ev.preventDefault();
+    }
+}
+
+document.getElementById("backButton").onclick = () => {
+    if (!gameIsOver()) {
+        if (confirm("Are you sure you want to abandon this game?")) {
+            window.location.replace(_HOMEPAGE);
+        }
+    } else {
+        window.location.replace(_HOMEPAGE);
     }
 }
 

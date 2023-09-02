@@ -69,3 +69,18 @@
     color: #FF0;
     background-color: #666;
 }
+
+.back-button {
+    background-color: #07F;
+    color: #FFF;
+    margin-left: 5%;
+    padding-left: 6%;
+    padding-right: 6%;
+    font-size: larger;
+    border-radius: 5%;
+}
+
+.back-button:hover {
+    background-color: #8CF;
+    color: #00F;
+}
