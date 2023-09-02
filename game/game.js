@@ -3,17 +3,6 @@ const sock = window.localStorage.getItem("socket");
 
 // console.log(pid, sock, window.localStorage.length);
 
-// let needInfo = false;
-// window.onblur = () => {
-//     needInfo = true;
-// }
-// window.onfocus = () => {
-//     if (needInfo) {
-//         needInfo = false;
-//         api.info(); // this is to refresh the timer because javascript sucks fucking dick
-//     }
-// }
-
 let self = "";
 let board = [[]];
 let activePlayer = "-";
@@ -38,26 +27,26 @@ const api = new WsApi(sock, pid, (msg) => {
             break;
         case ("INFORMATION"):
             self = resp.role;
-            updateInfo(resp.boardData);
-            if (self != activePlayer) { setState(OPP_TURN); }
-            if (!timeSet && gameStarted) { // just one time after the game starts, start your timer
-                if (self == "ONE") {
-                    startMyTimer();
-                }
+            if (!timeSet) {
+                addChat(`Time format: ${resp.boardData.time / 60}m + ${resp.boardData.increment}s`)
             }
             if (!timeSet && self == "ONE") {
                 document.getElementById("myTime").classList.add("red-time");
                 document.getElementById("myTime").id = "p1time";
                 document.getElementById("theirTime").classList.add("yellow-time");
                 document.getElementById("theirTime").id = "p2time";
+                if (gameStarted) { startMyTimer(); }
                 timeSet = true;
             } else {
                 document.getElementById("myTime").classList.add("yellow-time");
                 document.getElementById("myTime").id = "p2time";
                 document.getElementById("theirTime").classList.add("red-time");
                 document.getElementById("theirTime").id = "p1time";
+                if (gameStarted) { startOppTimer(); }
                 timeSet = true;
             }
+            updateInfo(resp.boardData);
+            if (self != activePlayer) { setState(OPP_TURN); }
             drawBoard(board);
             break;
         case ("MOVE_RESULT"):
@@ -124,6 +113,8 @@ const api = new WsApi(sock, pid, (msg) => {
             document.getElementById("turnBar").classList.add("game-started");
             if (self == "ONE") {
                 startMyTimer();
+            } else if (self == "TWO") {
+                startOppTimer();
             }
             gameStarted = true;
             break;
@@ -184,11 +175,12 @@ const setState = (st) => {
         startMyTimer();
     }
 
+    state = st;
     if (gameIsOver()) {
+        console.log("game is over!")
         clearInterval(timer);   
     }
-
-    state = st;
+    
     document.getElementById("state").textContent = stateAsString[st];
     
 }
