@@ -1,5 +1,3 @@
-let _URL = `https://${_DOMAIN}:${_PORT}`
-
 /*
 Pattern:
 
@@ -55,16 +53,25 @@ class Api {
      * @param {number} w 
      * @param {number} h 
      * @param {number} connect 
+     * @param {number} minutes
+     * @param {number} increment 
      * @param {(string) => void} useRoomID 
      */
-    static createRoom(playerID, w, h, connect, gravity, useRoomID, handleError = () => {}) {
+    static createRoom(
+        playerID,
+        w, h, connect,
+        gravity,
+        minutes, increment,
+        useRoomID, handleError = () => {}) {
         fetch(`${_URL}/create_room/`, {
             body: JSON.stringify({
                 playerID: playerID,
                 w: w,
                 h: h,
                 connect: connect,
-                gravity: gravity
+                gravity: gravity,
+                minutes: minutes,
+                increment: increment,
             }),
             method: "POST",
         }).catch((error) => {
