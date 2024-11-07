@@ -101,7 +101,7 @@ const redirectTo = (roomID) => {
     //showDialog("Joining..."); // this breaks in safari for UNKNOWN reasons
     Api.roomSocket(roomID, window.localStorage.getItem("playerID"), (sd) => {
         window.localStorage.setItem("socket", `wss://${_DOMAIN}/socket/${sd.socketID}/`);
-        window.location.replace(_GAMEPAGE);
+        window.location.assign(_GAMEPAGE);
     }, () => {
         alert("Couldn't get room connection.");
         hideDialog();

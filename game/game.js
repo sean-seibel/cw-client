@@ -378,10 +378,10 @@ document.getElementById("chatInput").onkeydown = (ev) => {
 document.getElementById("backButton").onclick = () => {
     if (!gameIsOver()) {
         if (confirm("Are you sure you want to abandon this game?")) {
-            window.location.replace(_HOMEPAGE);
+            window.location.assign(_HOMEPAGE);
         }
     } else {
-        window.location.replace(_HOMEPAGE);
+        window.location.assign(_HOMEPAGE);
     }
 }
 
